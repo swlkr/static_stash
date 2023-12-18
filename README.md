@@ -59,8 +59,7 @@ async fn main() {
 
 ## Reference them
 
-If you need to reference the static files later there is also a convenience function
-the uses `std::sync::OnceLock`:
+If you need to reference the static files later there is also a convenience function that uses `std::sync::OnceLock`:
 
 ```rust
 #[tokio::main]
