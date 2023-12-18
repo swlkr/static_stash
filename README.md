@@ -1,6 +1,6 @@
 # static_files_enum
 
-static_files_enum is a rust static files lib for axum
+static_files_enum provides an easy way to declare and embed your static files!
 
 ```sh
 cargo add static_files_enum # sorry not on crates.io yet
