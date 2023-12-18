@@ -64,7 +64,7 @@ If you need to reference the static files later there is also a convenience func
 ```rust
 #[tokio::main]
 async fn main() {
-  StaticFiles::once() // loads the static files into a static OnceLock
+  StaticFile::once() // loads the static files into a static OnceLock
 }
 
 fn render(inner: impl Render + 'static) -> Html {
