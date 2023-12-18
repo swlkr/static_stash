@@ -6,7 +6,7 @@ static_files_enum is a rust static files lib for axum
 cargo add static_files_enum # sorry not on crates.io yet
 ```
 
-# Declare your static files
+## Declare your static files
 
 This will embed the static files in your binary at compile time with `include_str!`.
 It will try to find the files starting from the root of your project: `CARGO_MANIFEST_DIR`.
@@ -23,7 +23,7 @@ enum StaticFile {
 }
 ```
 
-Then tell axum to serve them:
+## Serve them
 
 ```rust
 use axum::routing::get;
@@ -56,6 +56,8 @@ async fn main() {
   axum::serve(listener, router).await.unwrap();
 }
 ```
+
+## Reference them
 
 If you need to reference the static files later there is also a convenience function
 the uses `std::sync::OnceLock`:
