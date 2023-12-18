@@ -3,7 +3,7 @@
 static_files_enum is a rust static files lib for axum
 
 ```sh
-cargo add static_files_enum # still not on crates.io (yet)
+cargo add static_files_enum # sorry not on crates.io yet
 ```
 
 # Declare your static files
