@@ -1,4 +1,4 @@
-use proc_macro::TokenStream;
+use proc_macro::{Span, TokenStream};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
 use syn::{parse_macro_input, Data, DeriveInput, Field, Ident, LitStr, Result, Type, TypePath};
@@ -28,12 +28,13 @@ fn static_files_macro(input: DeriveInput) -> Result<TokenStream2> {
         |StaticFileField {
              file,
              ident,
+             content_type,
              r#type,
          }| {
             quote! {
-                #ident: StaticFileMeta {
+                #ident: #r#type {
                     content: include_str!(concat!(env!("CARGO_MANIFEST_DIR"), #file)),
-                    content_type: #r#type,
+                    content_type: #content_type,
                     filename: #file
                 }
             }
@@ -46,6 +47,11 @@ fn static_files_macro(input: DeriveInput) -> Result<TokenStream2> {
         }
     });
 
+    let type_alias = match fields.last() {
+        Some(field) => field.r#type.clone(),
+        None => Ident::new("Octet", Span::call_site().into()),
+    };
+
     Ok(quote! {
         impl #struct_ident {
             fn new() -> Self {
@@ -53,10 +59,15 @@ fn static_files_macro(input: DeriveInput) -> Result<TokenStream2> {
                     #(#meta_fields,)*
                 }
             }
+
+            fn once() -> &'static Self {
+                static STATIC_FILES: std::sync::OnceLock<StaticFile> = std::sync::OnceLock::new();
+                STATIC_FILES.get_or_init(|| Self::new())
+            }
         }
 
         impl StaticFiles for #struct_ident {
-            fn get(&self, uri: &str) -> Option<StaticFileMeta> {
+            fn get(&self, uri: &str) -> Option<#type_alias> {
                 match uri {
                     #(#get_matches,)*
                     _ => None
@@ -70,7 +81,8 @@ fn static_files_macro(input: DeriveInput) -> Result<TokenStream2> {
 struct StaticFileField {
     file: LitStr,
     ident: Ident,
-    r#type: &'static str,
+    content_type: &'static str,
+    r#type: Ident,
 }
 
 impl From<Field> for StaticFileField {
@@ -82,24 +94,26 @@ impl From<Field> for StaticFileField {
             .filter_map(|attr| attr.parse_args::<LitStr>().ok())
             .last()
             .expect("should be #[file]");
-        let r#type = match value.ty {
+        let (content_type, r#type) = match value.ty {
             Type::Path(TypePath { path, .. }) => {
-                if let Some(path_segment) = path.segments.first() {
+                if let Some(path_segment) = path.segments.last() {
+                    let ident = path_segment.ident.clone();
                     match path_segment.ident.to_string().as_str() {
-                        "Js" => "text/javascript",
-                        "Css" => "text/css",
+                        "Js" => ("text/javascript", ident),
+                        "Css" => ("text/css", ident),
                         _ => panic!("Unsupported content type, try Js or Css"),
                     }
                 } else {
                     panic!("Unsupported content type, try Js or Css")
                 }
             }
-            _ => todo!(),
+            _ => unimplemented!(),
         };
 
         Self {
             file,
             ident,
+            content_type,
             r#type,
         }
     }

@@ -18,6 +18,7 @@ impl Display for StaticFileMeta {
 
 pub type Js = StaticFileMeta;
 pub type Css = StaticFileMeta;
+pub type Octet = StaticFileMeta;
 
 pub trait StaticFiles {
     fn get(&self, uri: &str) -> Option<StaticFileMeta>;
