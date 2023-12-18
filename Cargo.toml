@@ -1,0 +1,12 @@
+[package]
+name = "static_files_enum"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+members = [
+  "static_files_enum_macros"
+]
+
+[dependencies]
+static_files_enum_macros = { path = "static_files_enum_macros", version = "0.1.0" }
