@@ -8,17 +8,17 @@ cargo add static_files_enum # still not on crates.io (yet)
 
 # Declare your static files
 
-This will embed the static files in your binary when you call `StaticFile::new()`.
-It also looks for files in the /static folder in the root of your project.
+This will embed the static files in your binary at compile time with `include_str!`.
+It will try to find the files starting from the root of your project: `CARGO_MANIFEST_DIR`.
 
 ```rust
 use static_files_enum::StaticFiles;
 
 #[derive(StaticFiles)]
 enum StaticFile {
-  #[path("htmx.js")]
+  #[file("/htmx.js")]
   Htmx,
-  #[path("tailwind.css")]
+  #[file("/tailwind.css")]
   Tailwind
 }
 ```
@@ -32,13 +32,53 @@ use axum::response::Response;
 
 #[tokio::main]
 async fn main() {
-  let static_files = StaticFile::new(); // this embeds the static files in your binary and loads the contents into memory
-  let addr = "127.0.0.1:9001".parse().unwrap();
-  let router = Router::new().route("/static/*file", get(|uri: Uri| -> impl IntoResponse {
-    static_files.get(uri.path.to_string()) // this retrieves the static files from memory not from disk
-  }))
+  // The new function calls `include_str!` and stores the result in the `content` field and puts the content_type in `content_type`
+  let static_files = StaticFile::new();
 
-  Server::bind(&addr).serve(router.into_make_service()).await.unwrap();
+  let router = Router::new().route("/*file", get(|uri: Uri| {
+      match static_files.get(&uri.path()) {
+          Some(file) => (
+              StatusCode::OK,
+              [(CONTENT_TYPE, file.content_type)],
+              file.content,
+          ),
+          None => (
+              StatusCode::NOT_FOUND,
+              [(CONTENT_TYPE, "text/html; charset=utf-8")],
+              "not found",
+          ),
+      }
+  }));
+
+  let addr = "127.0.0.1:9001".parse().unwrap();
+  let listener = tokio::net::TcpListener::bind(ip).await.unwrap();
+  println!("Listening on {}", ip);
+  axum::serve(listener, router).await.unwrap();
+}
+```
+
+If you need to reference the static files later there is also a convenience function
+the uses `std::sync::OnceLock`:
+
+```rust
+#[tokio::main]
+async fn main() {
+  StaticFiles::once() // loads the static files into a static OnceLock
+}
+
+fn render(inner: impl Render + 'static) -> Html {
+  // reuse once anywhere
+  let static_files = StaticFile::once();
+  html::render((
+      doctype("html"),
+      html((
+          head((
+              link.href(static_files.tailwind).rel("stylesheet"),
+              script.src(static_files.htmx).defer(),
+          )),
+          body(inner),
+      )),
+  ))
 }
 ```
 
