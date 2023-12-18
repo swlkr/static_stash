@@ -1,9 +1,9 @@
-# static_files_enum
+# Static stash
 
-static_files_enum provides an easy way to declare and embed your static files!
+Static stash provides an easy way to declare and embed your static files!
 
 ```sh
-cargo add static_files_enum # sorry not on crates.io yet
+cargo add static_stash # sorry not on crates.io yet
 ```
 
 ## Declare your static files
@@ -12,7 +12,7 @@ This will embed the static files in your binary at compile time with `include_st
 It will try to find the files starting from the root of your project: `CARGO_MANIFEST_DIR`.
 
 ```rust
-use static_files_enum::{StaticFiles, Js, Css};
+use static_stash::{StaticFiles, Js, Css};
 
 #[derive(StaticFiles)]
 struct StaticFile {

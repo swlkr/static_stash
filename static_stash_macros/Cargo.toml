@@ -1,5 +1,5 @@
 [package]
-name = "static_files_enum_macros"
+name = "static_stash_macros"
 version = "0.1.0"
 edition = "2021"
 

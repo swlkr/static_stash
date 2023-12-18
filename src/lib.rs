@@ -1,7 +1,7 @@
 use std::{borrow::Cow, fmt::Display};
 
-pub use static_files_enum_macros::StaticFiles;
-extern crate self as static_files_enum;
+pub use static_stash_macros::StaticFiles;
+extern crate self as static_stash;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct StaticFileMeta {
