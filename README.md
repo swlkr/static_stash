@@ -12,14 +12,14 @@ This will embed the static files in your binary at compile time with `include_st
 It will try to find the files starting from the root of your project: `CARGO_MANIFEST_DIR`.
 
 ```rust
-use static_files_enum::StaticFiles;
+use static_files_enum::{StaticFiles, Js, Css};
 
 #[derive(StaticFiles)]
-enum StaticFile {
+struct StaticFile {
   #[file("/htmx.js")]
-  Htmx,
+  htmx: Js,
   #[file("/tailwind.css")]
-  Tailwind
+  tailwind: Css
 }
 ```
 
