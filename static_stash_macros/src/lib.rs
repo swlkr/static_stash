@@ -35,8 +35,7 @@ fn static_files_macro(input: DeriveInput) -> Result<TokenStream2> {
                 #ident: #r#type {
                     content: include_str!(concat!(env!("CARGO_MANIFEST_DIR"), #file)),
                     content_type: #content_type,
-                    filename: #file,
-                    last_modified: #r#type::last_modified(#file)
+                    filename: #file
                 }
             }
         },

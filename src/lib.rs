@@ -8,15 +8,11 @@ pub struct StaticFileMeta {
     pub content: &'static str,
     pub content_type: &'static str,
     pub filename: &'static str,
-    pub last_modified: Option<u64>,
 }
 
 impl Display for StaticFileMeta {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self.last_modified {
-            Some(timestamp) => f.write_fmt(format_args!("{}?v={}", self.filename, timestamp)),
-            None => f.write_str(self.filename),
-        }
+        f.write_fmt(format_args!("{}?v={}", self.filename, self.hash()))
     }
 }
 
@@ -37,16 +33,14 @@ impl Into<CowStr> for StaticFileMeta {
 }
 
 impl StaticFileMeta {
-    pub fn last_modified(path: &str) -> Option<u64> {
-        let path = format!("{}{}", std::env::var("CARGO_MANIFEST_DIR").unwrap(), path);
-        let metadata = std::fs::metadata(path).unwrap();
-        let modified = metadata.modified().ok()?;
-        let last_modified = modified
-            .duration_since(std::time::SystemTime::UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
+    pub fn hash(&self) -> u64 {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+        let mut hasher = DefaultHasher::new();
+        self.content.hash(&mut hasher);
+        let hash_value = hasher.finish();
 
-        Some(last_modified)
+        hash_value
     }
 }
 
@@ -68,7 +62,7 @@ mod tests {
         assert_eq!(contents, "/* this is test.css */");
         assert_eq!(
             static_files.test.to_string(),
-            "/static/test.css?v=1702905741".to_owned()
+            "/static/test.css?v=14470699496319426751".to_owned()
         );
         assert_eq!(static_files.test.content_type, "text/javascript");
     }
