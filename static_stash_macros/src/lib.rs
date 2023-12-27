@@ -33,7 +33,7 @@ fn static_files_macro(input: DeriveInput) -> Result<TokenStream2> {
          }| {
             quote! {
                 #ident: #r#type {
-                    content: include_str!(concat!(env!("CARGO_MANIFEST_DIR"), #file)),
+                    content: include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), #file)).to_vec(),
                     content_type: #content_type,
                     filename: #file
                 }
@@ -43,7 +43,7 @@ fn static_files_macro(input: DeriveInput) -> Result<TokenStream2> {
 
     let get_matches = fields.iter().map(|StaticFileField { file, ident, .. }| {
         quote! {
-            #file => Some(self.#ident)
+            #file => Some(self.#ident.clone())
         }
     });
 
@@ -101,7 +101,8 @@ impl From<Field> for StaticFileField {
                     match path_segment.ident.to_string().as_str() {
                         "Js" => ("text/javascript", ident),
                         "Css" => ("text/css", ident),
-                        _ => panic!("Unsupported content type, try Js or Css"),
+                        "Wasm" => ("application/wasm", ident),
+                        _ => panic!("Unsupported content type, try Js, Css or Wasm"),
                     }
                 } else {
                     panic!("Unsupported content type, try Js or Css")
