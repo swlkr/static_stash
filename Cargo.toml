@@ -1,6 +1,6 @@
 [package]
 name = "static_stash"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 
 [workspace]
@@ -9,4 +9,4 @@ members = [
 ]
 
 [dependencies]
-static_stash_macros = { path = "static_stash_macros", version = "0.1.0" }
+static_stash_macros = { path = "static_stash_macros", version = "0.2.0" }

@@ -28,58 +28,52 @@ struct StaticFile {
 ```rust
 use axum::routing::get;
 use axum::{Server, Router};
-use axum::response::Response;
+use axum::response::IntoResponse;
 
 #[tokio::main]
 async fn main() {
-  // The new function calls `include_str!` and stores the result in the `content` field and puts the content_type in `content_type`
-  let static_files = StaticFile::new();
+    let router = Router::new().route("/*file", static_files);
+    serve("127.0.0.1:9001", router).await.unwrap();
+}
 
-  let router = Router::new().route("/*file", get(|uri: Uri| {
-      match static_files.get(&uri.path()) {
-          Some(file) => (
-              StatusCode::OK,
-              [(CONTENT_TYPE, file.content_type)],
-              file.content,
-          ),
-          None => (
-              StatusCode::NOT_FOUND,
-              [(CONTENT_TYPE, "text/html; charset=utf-8")],
-              "not found",
-          ),
-      }
-  }));
+async fn static_files(uri: Uri) -> impl IntoResponse {
+    match StaticFile::get(uri.path()) {
+        Some((content_type, bytes)) => (
+            StatusCode::OK,
+            [(CONTENT_TYPE, content_type)],
+            bytes,
+        ),
+        None => (
+            StatusCode::NOT_FOUND,
+            [(CONTENT_TYPE, "text/html; charset=utf-8")],
+            "not found".as_bytes(),
+        ),
+    }
+}
 
-  let addr = "127.0.0.1:9001".parse().unwrap();
-  let listener = tokio::net::TcpListener::bind(ip).await.unwrap();
-  println!("Listening on {}", ip);
-  axum::serve(listener, router).await.unwrap();
+async fn serve(ip: &str, router: Router) {
+    let listener = tokio::net::TcpListener::bind(ip).await.unwrap();
+    println!("Listening on {}", ip);
+    axum::serve(listener, router).await.unwrap();
 }
 ```
 
 ## Reference them
 
-If you need to reference the static files later there is also a convenience function that uses `std::sync::OnceLock`:
-
 ```rust
-#[tokio::main]
-async fn main() {
-  StaticFile::once() // loads the static files into a static OnceLock
-}
+fn render(inner: Element) -> String {
+    let file = StaticFile::new();
 
-fn render(inner: impl Render + 'static) -> Html {
-  // reuse once anywhere
-  let static_files = StaticFile::once();
-  html::render((
-      doctype("html"),
-      html((
-          head((
-              link.href(static_files.tailwind).rel("stylesheet"),
-              script.src(static_files.htmx).defer(),
-          )),
-          body(inner),
-      )),
-  ))
+    render((
+        doctype("html"),
+        html((
+            head((
+              link.href(file.tailwind).rel("stylesheet"),
+              script.src(file.htmx).defer(),
+            )),
+            body(inner),
+        )),
+    ))
 }
 ```
 
